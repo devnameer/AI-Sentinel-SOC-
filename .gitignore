@@ -1,0 +1,39 @@
+# ── Secrets — never commit ───────────────────────────────────────────────────
+.env
+*.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+
+# ── Runtime data (recreated automatically) ───────────────────────────────────
+data/runtime/
+*.sqlite3
+*.sqlite3-journal
+models/behavior_retrained/
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# ── Node / Next.js ───────────────────────────────────────────────────────────
+node_modules/
+frontend/.next/
+frontend/out/
+*.tsbuildinfo
+npm-debug.log*
+
+# ── Editors / OS ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

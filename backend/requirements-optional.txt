@@ -1,0 +1,14 @@
+# Optional extras — the platform runs without any of these.
+
+# Dense retrieval for RAG (local, free; downloads a ~90 MB embedding model once from Hugging Face)
+sentence-transformers>=3.0
+faiss-cpu>=1.8
+
+# PostgreSQL instead of SQLite (database.engine: postgres + DATABASE_URL in .env; works with Supabase)
+psycopg[binary]>=3.2
+
+# SMS notifications for pending approvals (paid service with a trial; notifications.twilio.enabled: true)
+twilio>=9.0
+
+# Windows-only collectors (usb, registry, windows_events, email)
+pywin32>=306; platform_system == "Windows"

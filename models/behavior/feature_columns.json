@@ -1,0 +1,20 @@
+[
+  "hour_of_day",
+  "hour_deviation",
+  "is_weekend",
+  "is_outside_hours",
+  "is_new_device",
+  "file_count",
+  "file_count_zscore",
+  "files_per_minute",
+  "max_sensitivity",
+  "sensitivity_above_ceil",
+  "email_count",
+  "has_ext_email",
+  "usb_connected",
+  "usb_first_time",
+  "visited_exfil_domain",
+  "visited_jobsearch_domain",
+  "recent_score_trend",
+  "file_count_peer_zscore"
+]

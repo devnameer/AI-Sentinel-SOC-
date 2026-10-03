@@ -1,0 +1,66 @@
+# Sentinel SOC — one command:   docker compose up --build
+#
+#   frontend  http://localhost:3000   (Next.js dashboard)
+#   backend   http://localhost:8000   (Django API, agents, ML)
+#
+# Ollama normally runs on your host (best for GPU). The backend reaches it at
+# host.docker.internal:11434. To run Ollama in Docker as well (CPU by default):
+#   docker compose --profile ollama up --build
+#   docker compose exec ollama ollama pull qwen3:8b
+# and set DOCKER_OLLAMA_URL=http://ollama:11434 in .env.
+#
+# .env is optional here (copy .env.example to .env to set keys/tokens).
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      OLLAMA_BASE_URL: ${DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}   # must include "backend"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # makes the host reachable on Linux too
+    ports:
+      - "8000:8000"
+    volumes:
+      - soc-runtime:/app/data/runtime          # SQLite DB, runtime baselines, Q-table, RAG index
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    # NVIDIA GPU (needs the NVIDIA Container Toolkit) — uncomment:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+volumes:
+  soc-runtime:
+  ollama-models:

@@ -1,0 +1,172 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  SOC Platform — application configuration (NON-SECRET values only)
+#
+#  • Secrets (API keys, tokens, passwords, DB URLs) live in the .env file.
+#  • A few keys can be overridden by environment variables for convenience;
+#    the override is noted next to each key as  [env: NAME].
+#  • Relative paths are resolved from the repository root.
+#  • Validate this file with:   python backend/manage.py check_config
+# ─────────────────────────────────────────────────────────────────────────────
+
+app:
+  name: "Sentinel SOC"
+  environment: development          # [env: APP_ENV] development | production
+  timezone: UTC
+
+# ── LLM ──────────────────────────────────────────────────────────────────────
+# The agents never talk to a provider directly. They call core.llm.LLMClient,
+# which picks the provider configured here.  Switching provider = change one
+# line (or set LLM_PROVIDER in .env). No agent code changes.
+llm:
+  provider: ollama                  # [env: LLM_PROVIDER]  ollama | groq | huggingface | openai_compatible | mock | none
+  fallback_provider: none           # [env: LLM_FALLBACK_PROVIDER] used only if the primary fails (e.g. groq)
+  temperature: 0.2
+  max_tokens: 400
+  timeout_seconds: 60               # per request; local models on CPU can be slow
+  retry_cooldown_seconds: 30        # after a failure, skip the provider for this long (keeps the UI fast when Ollama is off)
+  only_for_flagged_events: true     # skip LLM calls for sessions the ML model scored as normal
+
+  providers:
+    ollama:
+      base_url: http://localhost:11434   # [env: OLLAMA_BASE_URL]
+      model: llama3.2:3b                     # [env: LLM_MODEL] e.g. qwen3:4b, llama3.1:8b, gemma3:4b
+      keep_alive: 10m
+    groq:                                 # free tier with rate limits — needs GROQ_API_KEY in .env
+      base_url: https://api.groq.com/openai/v1
+      model: llama-3.1-8b-instant         # [env: GROQ_MODEL]
+    huggingface:                          # HF Inference Providers router — needs HF_TOKEN in .env
+      base_url: https://router.huggingface.co/v1
+      model: Qwen/Qwen2.5-7B-Instruct     # [env: HF_MODEL]
+    openai_compatible:                    # any OpenAI-compatible server (LM Studio, vLLM, llama.cpp server…)
+      base_url: http://localhost:1234/v1  # [env: OPENAI_COMPATIBLE_BASE_URL]
+      model: local-model                  # [env: OPENAI_COMPATIBLE_MODEL]  key: LLM_API_KEY in .env (optional)
+
+  # Which agent features use the LLM. Every feature has a deterministic fallback.
+  features:
+    data_tool_selection: false      # Data Agent asks the LLM which MCP collectors to run
+    behavior_explanation: true      # Behavior Agent: analyst-style explanation of the ML result
+    risk_assessment: true           # Risk Agent: bounded contextual risk adjustment
+    response_summary: true          # Response Agent: incident summary + playbook for the analyst
+    attack_planning: false          # Attacker Agent: LLM picks the next scenario to test
+
+# ── Agents ───────────────────────────────────────────────────────────────────
+agents:
+  data_agent:
+    enabled: true
+    default_source: replay           # replay (CERT dataset) | host (local collectors)
+    host_collectors: [system, process, network, file]   # see tools/collectors/
+    max_events_per_collection: 300
+    network_window_size: 25          # network connections per network-model window
+  attacker_agent:
+    enabled: true
+    seed: null                       # set an int for reproducible simulations
+  behavior_agent:
+    enabled: true
+  risk_agent:
+    enabled: true
+    max_llm_adjustment: 0.3          # LLM may move the risk score by at most ±0.3
+    repeat_offender:
+      window_hours: 24
+      min_prior_events: 3            # ≥3 prior MEDIUM events in the window → escalate
+      penalty: 0.15
+  response_agent:
+    enabled: true
+
+# ── Machine learning ─────────────────────────────────────────────────────────
+ml:
+  behavior:
+    model_path: models/behavior/isolation_forest.joblib
+    feature_columns_path: models/behavior/feature_columns.json
+    score_bounds_path: models/behavior/score_bounds.json
+    baselines_seed_path: data/datasets/cert_r42_baselines.sqlite
+    baselines_path: data/runtime/baselines.sqlite     # copied from the seed on first run
+    # Scoring: "isolation_forest" = IF only (original behaviour)
+    #          "hybrid" = if_weight * IF + rules_weight * rule score (better on CERT, see README › ML)
+    scoring_mode: hybrid
+    if_weight: 0.4
+    rules_weight: 0.6
+    rule_weights:
+      usb_connected: 0.35
+      visited_exfil_domain: 0.6
+      visited_jobsearch_domain: 0.25
+      has_ext_email: 0.1
+      is_outside_hours: 0.05
+      usb_first_time: 0.15
+    anomaly_threshold: 0.4           # sessions with score ≥ threshold are "flagged"
+    baseline_update_threshold: 0.4   # only sessions below this update the user's baseline
+  network:
+    scaler_path: models/network/minmax_scaler.joblib
+    isolation_forest_path: models/network/isolation_forest.joblib
+    catboost_path: models/network/catboost.cbm
+    if_weight: 0.4
+    catboost_weight: 0.6
+    anomaly_threshold: 0.4
+
+# ── Reinforcement learning (Response Agent) ──────────────────────────────────
+rl:
+  q_table_path: models/rl/q_table.json            # pre-trained policy (scripts/train_rl_policy.py)
+  runtime_q_table_path: data/runtime/q_table.json # copy that learns from APPROVE / DENY (reset_demo deletes it)
+  learning_rate: 0.1                 # alpha
+  discount_factor: 0.0               # gamma — one decision per incident (terminal), see README › RL
+  epsilon: 0.1                       # exploration rate used only while training
+  learn_from_analyst_feedback: true  # approve/deny on the dashboard updates the Q-table
+
+# ── Risk policy ──────────────────────────────────────────────────────────────
+risk:
+  thresholds:
+    low_max: 0.4                     # score < 0.4 → LOW (same boundary as the anomaly flag)
+    medium_max: 0.7                  # 0.4 ≤ score ≤ 0.7 → MEDIUM, above → HIGH
+  # Guardrails applied on top of the RL recommendation
+  min_action:
+    HIGH: ESCALATE
+    MEDIUM: MONITOR
+    LOW: ALLOW
+  max_action:
+    LOW: MONITOR
+
+# ── Response / human-in-the-loop ─────────────────────────────────────────────
+response:
+  require_approval_for: [MEDIUM, HIGH]   # these risk levels create an incident awaiting APPROVE / DENY
+  auto_execute_high_risk: false          # true = HIGH risk actions run without waiting for a human
+  # Actions are recorded by the platform (simulated containment). Nothing touches real systems.
+
+notifications:
+  twilio:
+    enabled: false                   # optional SMS alert for pending approvals (needs TWILIO_* in .env)
+    notify_levels: [HIGH]
+
+# ── Retrieval (RAG) ──────────────────────────────────────────────────────────
+retrieval:
+  enabled: true
+  knowledge_dir: backend/rag/knowledge
+  index_dir: data/runtime/rag_index
+  backend: auto                      # auto | sentence_transformers | tfidf
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2   # [env: EMBEDDING_MODEL]
+  top_k: 3
+
+# ── MCP tools ────────────────────────────────────────────────────────────────
+mcp:
+  transport: inprocess               # inprocess (fast, same process) | stdio (spawns tools/mcp_server.py)
+  timeout_seconds: 30
+
+# ── Data / database ──────────────────────────────────────────────────────────
+data:
+  replay_dataset_path: data/datasets/cert_r42_sessions.csv.gz
+  insiders_path: data/datasets/cert_insiders.csv
+  runtime_dir: data/runtime
+
+database:
+  engine: sqlite                     # sqlite | postgres  (postgres needs DATABASE_URL in .env)
+  sqlite_path: data/runtime/soc.sqlite3
+
+# ── Live stream (background ingestion for demos) ─────────────────────────────
+stream:
+  interval_seconds: 5                # one ingestion batch every N seconds while the stream is running
+  batch_size: 3
+
+# ── API ──────────────────────────────────────────────────────────────────────
+api:
+  page_size: 50
+  throttle:
+    simulate: 30/min
+    ingest: 60/min

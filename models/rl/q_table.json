@@ -1,0 +1,188 @@
+{
+ "format": "q_table/v1",
+ "actions": [
+  "ALLOW",
+  "MONITOR",
+  "ESCALATE",
+  "BLOCK"
+ ],
+ "hyperparameters": {
+  "alpha": 0.1,
+  "gamma": 0.0,
+  "epsilon": 0.1
+ },
+ "updates": 40000,
+ "saved_at": "2026-10-01T10:19:58.674658+00:00",
+ "metadata": {
+  "trained_with": "scripts/train_rl_policy.py",
+  "episodes": 40000,
+  "seed": 42,
+  "samples": 5096,
+  "malicious_samples": 1036,
+  "sources": [
+   "attacker_agent simulations (8 scenarios)",
+   "CERT r4.2 replay (insider window labels)"
+  ],
+  "held_out_good_action_rate": 0.8755,
+  "rule_policy_good_action_rate": 0.8686,
+  "mean_training_reward": 0.6428
+ },
+ "visits": {
+  "LOW|s1|r1|warm": 10602,
+  "MEDIUM|s2|r1|warm": 3852,
+  "LOW|s0|r1|warm": 11081,
+  "LOW|s0|r0|warm": 6840,
+  "HIGH|s4|r1|warm": 498,
+  "MEDIUM|s3|r2|warm": 1322,
+  "HIGH|s3|r2|warm": 882,
+  "HIGH|s4|r2|warm": 893,
+  "MEDIUM|s2|r1|cold": 234,
+  "HIGH|s3|r1|warm": 583,
+  "HIGH|s3|r1|cold": 90,
+  "HIGH|s4|r3|warm": 455,
+  "MEDIUM|s3|r1|warm": 484,
+  "LOW|s0|r0|cold": 247,
+  "HIGH|s4|r3|cold": 522,
+  "MEDIUM|s2|r2|warm": 891,
+  "LOW|s1|r0|warm": 424,
+  "MEDIUM|s3|r1|cold": 60,
+  "HIGH|s4|r1|cold": 10,
+  "HIGH|s4|r2|cold": 10,
+  "HIGH|s3|r2|cold": 10,
+  "HIGH|s3|r3|warm": 10
+ },
+ "q_table": {
+  "HIGH|s3|r1|cold": {
+   "ALLOW": -0.19,
+   "MONITOR": -0.13756,
+   "ESCALATE": 0.799843,
+   "BLOCK": 0.271
+  },
+  "HIGH|s3|r1|warm": {
+   "ALLOW": -0.771232,
+   "MONITOR": -0.345966,
+   "ESCALATE": 0.666583,
+   "BLOCK": 0.943342
+  },
+  "HIGH|s3|r2|cold": {
+   "ALLOW": 0.0,
+   "MONITOR": -0.04,
+   "ESCALATE": 0.490064,
+   "BLOCK": 0.0
+  },
+  "HIGH|s3|r2|warm": {
+   "ALLOW": -0.193799,
+   "MONITOR": -0.047403,
+   "ESCALATE": 0.490138,
+   "BLOCK": 0.043268
+  },
+  "HIGH|s3|r3|warm": {
+   "ALLOW": 0.0,
+   "MONITOR": -0.04,
+   "ESCALATE": 0.490064,
+   "BLOCK": 0.0
+  },
+  "HIGH|s4|r1|cold": {
+   "ALLOW": 0.0,
+   "MONITOR": 0.0,
+   "ESCALATE": 0.0,
+   "BLOCK": 0.651322
+  },
+  "HIGH|s4|r1|warm": {
+   "ALLOW": -0.61258,
+   "MONITOR": -0.308493,
+   "ESCALATE": 0.8,
+   "BLOCK": 0.771232
+  },
+  "HIGH|s4|r2|cold": {
+   "ALLOW": -0.19,
+   "MONITOR": -0.04,
+   "ESCALATE": 0.417362,
+   "BLOCK": 0.0
+  },
+  "HIGH|s4|r2|warm": {
+   "ALLOW": -0.319154,
+   "MONITOR": -0.085656,
+   "ESCALATE": 0.515781,
+   "BLOCK": 0.241626
+  },
+  "HIGH|s4|r3|cold": {
+   "ALLOW": -0.651322,
+   "MONITOR": -0.287028,
+   "ESCALATE": 0.8,
+   "BLOCK": 0.999995
+  },
+  "HIGH|s4|r3|warm": {
+   "ALLOW": -0.686189,
+   "MONITOR": -0.260391,
+   "ESCALATE": 0.727819,
+   "BLOCK": 0.599472
+  },
+  "LOW|s0|r0|cold": {
+   "ALLOW": 1.0,
+   "MONITOR": 0.30629,
+   "ESCALATE": -0.156511,
+   "BLOCK": -0.71757
+  },
+  "LOW|s0|r0|warm": {
+   "ALLOW": 0.756572,
+   "MONITOR": 0.366922,
+   "ESCALATE": -0.258195,
+   "BLOCK": -0.854605
+  },
+  "LOW|s0|r1|warm": {
+   "ALLOW": 0.941156,
+   "MONITOR": 0.42749,
+   "ESCALATE": -0.295223,
+   "BLOCK": -0.956905
+  },
+  "LOW|s1|r0|warm": {
+   "ALLOW": 0.86874,
+   "MONITOR": 0.22529,
+   "ESCALATE": -0.223744,
+   "BLOCK": -0.71757
+  },
+  "LOW|s1|r1|warm": {
+   "ALLOW": 0.216901,
+   "MONITOR": 0.342247,
+   "ESCALATE": -0.282554,
+   "BLOCK": -0.966361
+  },
+  "MEDIUM|s2|r1|cold": {
+   "ALLOW": -0.3439,
+   "MONITOR": -0.287028,
+   "ESCALATE": 0.8,
+   "BLOCK": 0.686189
+  },
+  "MEDIUM|s2|r1|warm": {
+   "ALLOW": -0.044751,
+   "MONITOR": 0.192959,
+   "ESCALATE": 0.00931,
+   "BLOCK": -0.323916
+  },
+  "MEDIUM|s2|r2|warm": {
+   "ALLOW": 0.132113,
+   "MONITOR": 0.281827,
+   "ESCALATE": -0.019614,
+   "BLOCK": -0.009835
+  },
+  "MEDIUM|s3|r1|cold": {
+   "ALLOW": -0.109,
+   "MONITOR": 0.0,
+   "ESCALATE": 0.658724,
+   "BLOCK": 0.1
+  },
+  "MEDIUM|s3|r1|warm": {
+   "ALLOW": 0.180507,
+   "MONITOR": 0.050797,
+   "ESCALATE": -0.05924,
+   "BLOCK": -0.177219
+  },
+  "MEDIUM|s3|r2|warm": {
+   "ALLOW": 0.129312,
+   "MONITOR": 0.378668,
+   "ESCALATE": -0.052649,
+   "BLOCK": -0.157408
+  }
+ }
+}
